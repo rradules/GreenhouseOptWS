@@ -4,6 +4,7 @@
  */
 package greenhouseoptws;
 
+import beans.Request;
 import com.google.gson.Gson;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -21,18 +22,22 @@ public class GreenhouseOptWS {
 
     @WebMethod(operationName = "getCostEfficiency")
     public String getCostEfficiency(@WebParam(name = "json") String json) {
+        //wT, wB, T_opt, B_opt, budget, max_T_heat, max_B_light
+
         Request request = new Request();
-        Gson gson = new Gson();         
-        request = gson.fromJson(json, request.getClass());    
+        Gson gson = new Gson();
+        request = gson.fromJson(json, request.getClass());
 
         PythonInterpreter interpret = new PythonInterpreter();
-        interpret.execfile("temperature.py");
-        PyFloat opt_temp = new PyFloat(request.getOpt_temp());
-        PyFloat budget = new PyFloat(request.getBudget());
-        PyFloat[] args = {opt_temp, budget};
+        interpret.execfile("cost-efficiency.py");
+        PyFloat[] args = {new PyFloat(request.getwT()), new PyFloat(request.getwB()),
+            new PyFloat(request.getOpt_temp()), new PyFloat(request.getOpt_bright()),
+            new PyFloat(request.getBudget()), new PyFloat(request.getMax_temp_heat()),
+            new PyFloat(request.getMax_bright_light())};
         PyFunction funct = (PyFunction) interpret.eval("main");
-        String result = funct.__call__(args).toString();
+        String result = funct.__call__(args).asString();
         System.out.println(result);
+
         return result;
     }
 }
